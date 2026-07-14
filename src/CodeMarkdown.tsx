@@ -32,18 +32,8 @@ export function CodeMarkdown({
 
       const output = highlighter.codeToHtml(code, {
         lang: language,
-        theme: theme.shikiTheme,
-        transformers: [
-          {
-            line(node: any, line: number) {
-              node.properties["data-line"] = line;
-              if (highlightLines.includes(line)) {
-                node.properties["class"] =
-                  (node.properties["class"] || "") + " highlighted";
-              }
-            },
-          },
-        ],
+        theme,
+        highlightLines,
       });
 
       setHtml(output);
