@@ -1,0 +1,60 @@
+{
+  "name": "code-markdown",
+  "version": "0.1.0",
+  "description": "A React component for beautiful code snippets with syntax highlighting and theming",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./themes": {
+      "types": "./dist/themes/index.d.ts",
+      "import": "./dist/themes/index.js",
+      "require": "./dist/themes/index.cjs"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "demo:dev": "cd demo && bun dev",
+    "demo:build": "cd demo && bun run build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^6.0.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3",
+    "vite": "^8.1.4"
+  },
+  "dependencies": {
+    "shiki": "^3.7.2"
+  },
+  "keywords": [
+    "react",
+    "code",
+    "syntax-highlighting",
+    "markdown",
+    "catppuccin",
+    "shiki",
+    "code-snippet"
+  ],
+  "license": "MIT"
+}
