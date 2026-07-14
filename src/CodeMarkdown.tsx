@@ -1,61 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { createHighlighter } from "shiki";
 import type { CodeTheme, CodeMarkdownProps } from "./types";
 import { catppuccinMocha } from "./themes/catppuccin";
 import { CodeHeader } from "./components/CodeHeader";
 import { CodeBody } from "./components/CodeBody";
 import { CodeLoading } from "./components/CodeLoading";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let sharedHighlighter: any = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let highlighterPromise: Promise<any> | null = null;
-
-async function getHighlighter() {
-  if (sharedHighlighter) return sharedHighlighter;
-  if (highlighterPromise) return highlighterPromise;
-
-  highlighterPromise = createHighlighter({
-    themes: [
-      "catppuccin-mocha",
-      "catppuccin-macchiato",
-      "catppuccin-frappe",
-      "catppuccin-latte",
-    ],
-    langs: [
-      "javascript",
-      "typescript",
-      "jsx",
-      "tsx",
-      "html",
-      "css",
-      "json",
-      "python",
-      "rust",
-      "go",
-      "bash",
-      "sql",
-      "yaml",
-      "markdown",
-      "c",
-      "cpp",
-      "java",
-      "ruby",
-      "php",
-      "swift",
-      "kotlin",
-      "toml",
-      "dockerfile",
-    ],
-  });
-
-  sharedHighlighter = await highlighterPromise;
-  return sharedHighlighter;
-}
-
-function normalizeCode(value: string) {
-  return value.replace(/^\n/, "").replace(/\n$/, "");
-}
+import { getCodeHighlighter, normalizeCode } from "./highlighter";
 
 export function CodeMarkdown({
   children,
@@ -79,7 +28,7 @@ export function CodeMarkdown({
 
   const loadHighlighter = useCallback(async () => {
     try {
-      const highlighter = await getHighlighter();
+      const highlighter = await getCodeHighlighter();
 
       const output = highlighter.codeToHtml(code, {
         lang: language,

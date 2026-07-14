@@ -1,4 +1,5 @@
 export { CodeMarkdown } from "./CodeMarkdown";
+export { getCodeHighlighter, normalizeCode } from "./highlighter";
 export type { CodeTheme, CodeMarkdownProps } from "./types";
 export {
   catppuccinMocha,
