@@ -7,3 +7,4 @@ export {
   catppuccinLatte,
   catppuccinThemes,
 } from "./themes/catppuccin";
+export { anysphereTheme, anysphereTheme as anySphereTheme } from "./themes/anysphere";

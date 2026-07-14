@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { createHighlighter } from "shiki";
 import type { CodeTheme, CodeMarkdownProps } from "./types";
 import { catppuccinMocha } from "./themes/catppuccin";
+import { CodeHeader } from "./components/CodeHeader";
+import { CodeBody } from "./components/CodeBody";
+import { CodeLoading } from "./components/CodeLoading";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let sharedHighlighter: any = null;
@@ -50,39 +53,8 @@ async function getHighlighter() {
   return sharedHighlighter;
 }
 
-function CopyIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
+function normalizeCode(value: string) {
+  return value.replace(/^\n/, "").replace(/\n$/, "");
 }
 
 export function CodeMarkdown({
@@ -102,10 +74,12 @@ export function CodeMarkdown({
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const code = normalizeCode(children);
+  const lines = code.split(/\r?\n/);
+
   const loadHighlighter = useCallback(async () => {
     try {
       const highlighter = await getHighlighter();
-      const code = children.trim();
 
       const output = highlighter.codeToHtml(code, {
         lang: language,
@@ -127,7 +101,7 @@ export function CodeMarkdown({
     } catch (err) {
       console.error("Failed to highlight code:", err);
       setHtml(
-        `<pre><code>${children
+        `<pre><code>${code
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")}</code></pre>`
@@ -135,7 +109,7 @@ export function CodeMarkdown({
     } finally {
       setIsLoading(false);
     }
-  }, [children, language, theme, highlightLines]);
+  }, [code, language, theme, highlightLines]);
 
   useEffect(() => {
     loadHighlighter();
@@ -143,13 +117,13 @@ export function CodeMarkdown({
 
   const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(children.trim());
+      await navigator.clipboard.writeText(code);
       setCopied(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       const textarea = document.createElement("textarea");
-      textarea.value = children.trim();
+      textarea.value = code;
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand("copy");
@@ -158,15 +132,13 @@ export function CodeMarkdown({
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => setCopied(false), 2000);
     }
-  }, [children]);
+  }, [code]);
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
-
-  const lines = children.trim().split("\n");
 
   const containerStyle: React.CSSProperties = {
     "--code-bg": theme.colors.background,
@@ -177,7 +149,7 @@ export function CodeMarkdown({
     "--code-subtext": theme.colors.subtext,
     "--code-comment": theme.colors.comment,
     position: "relative",
-    borderRadius: "12px",
+    borderRadius: "5px",
     overflow: "hidden",
     ...style,
   } as React.CSSProperties;
@@ -188,54 +160,27 @@ export function CodeMarkdown({
         className={`code-markdown code-markdown--loading ${className || ""}`}
         style={containerStyle}
       >
-        <div className="code-markdown__loading">
-          <div className="code-markdown__loading-pulse" />
-        </div>
+        <CodeLoading />
       </div>
     );
   }
 
   return (
-    <div
-      className={`code-markdown ${className || ""}`}
-      style={containerStyle}
-    >
-      <div className="code-markdown__header">
-        {showLanguage && (
-          <span className="code-markdown__language">{language}</span>
-        )}
-        {showCopyButton && (
-          <button
-            className="code-markdown__copy"
-            onClick={handleCopy}
-            aria-label={copied ? "Copied!" : "Copy code"}
-          >
-            {copied ? <CheckIcon /> : <CopyIcon />}
-            <span>{copied ? "Copied!" : "Copy"}</span>
-          </button>
-        )}
-      </div>
+    <div className={`code-markdown ${className || ""}`} style={containerStyle}>
+      <CodeHeader
+        language={language}
+        copied={copied}
+        showLanguage={showLanguage}
+        showCopyButton={showCopyButton}
+        onCopy={handleCopy}
+      />
 
-      <div className="code-markdown__body">
-        {showLineNumbers && (
-          <div className="code-markdown__line-numbers">
-            {lines.map((_, i) => (
-              <span
-                key={i}
-                className={`code-markdown__line-number ${
-                  highlightLines.includes(i + 1) ? "highlighted" : ""
-                }`}
-              >
-                {i + 1}
-              </span>
-            ))}
-          </div>
-        )}
-        <div
-          className="code-markdown__code"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-      </div>
+      <CodeBody
+        html={html}
+        lines={lines}
+        showLineNumbers={showLineNumbers}
+        highlightLines={highlightLines}
+      />
     </div>
   );
 }

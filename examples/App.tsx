@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { CodeMarkdown, catppuccinMocha, catppuccinMacchiato, catppuccinFrappe, catppuccinLatte, type CodeTheme } from "../src";
+import { anySphereTheme, CodeMarkdown, catppuccinMocha, catppuccinMacchiato, catppuccinFrappe, catppuccinLatte, type CodeTheme } from "../src";
 
 const themes: { label: string; value: CodeTheme }[] = [
   { label: "Mocha", value: catppuccinMocha },
   { label: "Macchiato", value: catppuccinMacchiato },
   { label: "Frappe", value: catppuccinFrappe },
   { label: "Latte", value: catppuccinLatte },
+  {label: "Cursro Dark", value: anySphereTheme}
 ];
 
 const codeExamples = [
