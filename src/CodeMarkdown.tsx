@@ -11,7 +11,8 @@ export function CodeMarkdown({
   theme = catppuccinMocha,
   font = '"JetBrains Mono", "Fira Code", monospace',
   language = "typescript",
-  showLineNumbers = false,
+  showLineNumbers,
+  lineNumbers,
   showCopyButton = true,
   showLanguage = true,
   className,
@@ -25,6 +26,7 @@ export function CodeMarkdown({
 
   const code = normalizeCode(children);
   const lines = code.split(/\r?\n/);
+  const shouldShowLineNumbers = showLineNumbers ?? lineNumbers ?? false;
 
   const loadHighlighter = useCallback(async () => {
     try {
@@ -117,7 +119,7 @@ export function CodeMarkdown({
       <CodeBody
         html={html}
         lines={lines}
-        showLineNumbers={showLineNumbers}
+        showLineNumbers={shouldShowLineNumbers}
         highlightLines={highlightLines}
       />
     </div>

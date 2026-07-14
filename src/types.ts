@@ -28,6 +28,7 @@ export interface CodeMarkdownProps {
   font?: string;
   language?: string;
   showLineNumbers?: boolean;
+  lineNumbers?: boolean;
   showCopyButton?: boolean;
   showLanguage?: boolean;
   className?: string;
