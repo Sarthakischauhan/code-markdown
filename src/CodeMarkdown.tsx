@@ -11,7 +11,8 @@ export function CodeMarkdown({
   theme = catppuccinMocha,
   font = '"JetBrains Mono", "Fira Code", monospace',
   language = "typescript",
-  showLineNumbers = false,
+  showLineNumbers,
+  lineNumbers,
   showCopyButton = true,
   showLanguage = true,
   className,
@@ -25,6 +26,7 @@ export function CodeMarkdown({
 
   const code = normalizeCode(children);
   const lines = code.split(/\r?\n/);
+  const shouldShowLineNumbers = showLineNumbers ?? lineNumbers ?? false;
 
   const loadHighlighter = useCallback(async () => {
     try {
@@ -32,18 +34,8 @@ export function CodeMarkdown({
 
       const output = highlighter.codeToHtml(code, {
         lang: language,
-        theme: theme.shikiTheme,
-        transformers: [
-          {
-            line(node: any, line: number) {
-              node.properties["data-line"] = line;
-              if (highlightLines.includes(line)) {
-                node.properties["class"] =
-                  (node.properties["class"] || "") + " highlighted";
-              }
-            },
-          },
-        ],
+        theme,
+        highlightLines,
       });
 
       setHtml(output);
@@ -127,7 +119,7 @@ export function CodeMarkdown({
       <CodeBody
         html={html}
         lines={lines}
-        showLineNumbers={showLineNumbers}
+        showLineNumbers={shouldShowLineNumbers}
         highlightLines={highlightLines}
       />
     </div>
