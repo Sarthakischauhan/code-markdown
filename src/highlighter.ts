@@ -1,4 +1,6 @@
-import type { CodeTheme } from "./types";
+import { getGrammar } from "./grammars";
+import type { LanguageGrammar, TokenMatch } from "./grammars/types";
+import type { CodeTheme, TokenType } from "./types";
 
 type HighlightLine = {
   line(node: { properties: Record<string, string> }, line: number): void;
@@ -12,60 +14,13 @@ type CodeToHtmlOptions = {
 };
 
 type Token = {
-  type: "keyword" | "string" | "comment" | "number" | "punctuation" | "operator" | "text";
+  type: TokenType;
   value: string;
 };
 
 type MiniHighlighter = {
   codeToHtml(code: string, options: CodeToHtmlOptions): string;
 };
-
-const JS_KEYWORDS = new Set([
-  "await",
-  "break",
-  "case",
-  "catch",
-  "class",
-  "const",
-  "continue",
-  "debugger",
-  "default",
-  "delete",
-  "do",
-  "else",
-  "export",
-  "extends",
-  "false",
-  "finally",
-  "for",
-  "function",
-  "if",
-  "import",
-  "in",
-  "instanceof",
-  "let",
-  "new",
-  "null",
-  "return",
-  "super",
-  "switch",
-  "this",
-  "throw",
-  "true",
-  "try",
-  "typeof",
-  "var",
-  "void",
-  "while",
-  "with",
-  "yield",
-  "async",
-  "from",
-  "as",
-]);
-
-const JSON_KEYWORDS = new Set(["true", "false", "null"]);
-const BASH_KEYWORDS = new Set(["if", "then", "else", "elif", "fi", "for", "in", "do", "done", "case", "esac", "function", "local", "export"]);
 
 function escapeHtml(value: string) {
   return value
@@ -80,92 +35,148 @@ function normalizeCode(value: string) {
   return value.replace(/^\n/, "").replace(/\n$/, "");
 }
 
-function keywordsFor(lang?: string) {
-  switch (lang) {
-    case "json":
-      return JSON_KEYWORDS;
-    case "bash":
-    case "shell":
-      return BASH_KEYWORDS;
-    default:
-      return JS_KEYWORDS;
+function matchComment(line: string, index: number, grammar: LanguageGrammar): TokenMatch | null {
+  for (const prefix of grammar.commentPrefixes ?? []) {
+    if (line.startsWith(prefix, index)) {
+      return {
+        token: { type: "comment", value: line.slice(index) },
+        nextIndex: line.length,
+      };
+    }
   }
+
+  return null;
+}
+
+function matchString(line: string, index: number, grammar: LanguageGrammar): TokenMatch | null {
+  const quote = line[index] as '"' | "'" | "`";
+  if (!(grammar.stringDelimiters ?? []).includes(quote)) {
+    return null;
+  }
+
+  let cursor = index + 1;
+  while (cursor < line.length) {
+    if (line[cursor] === "\\") {
+      cursor += 2;
+      continue;
+    }
+
+    if (line[cursor] === quote) {
+      cursor++;
+      break;
+    }
+
+    cursor++;
+  }
+
+  return {
+    token: { type: "string", value: line.slice(index, cursor) },
+    nextIndex: cursor,
+  };
+}
+
+function matchNumber(line: string, index: number, grammar: LanguageGrammar): TokenMatch | null {
+  if (!/[0-9]/.test(line[index])) {
+    return null;
+  }
+
+  let cursor = index;
+  while (cursor < line.length && /[A-Za-z0-9._+-]/.test(line[cursor])) {
+    cursor++;
+  }
+
+  const value = line.slice(index, cursor);
+  if (!grammar.numberLiteral?.test(value)) {
+    return null;
+  }
+
+  return {
+    token: { type: "number", value },
+    nextIndex: cursor,
+  };
+}
+
+function matchIdentifier(line: string, index: number, grammar: LanguageGrammar): TokenMatch | null {
+  const identifierStart = grammar.identifierStart ?? /[A-Za-z_$]/;
+  const identifierPart = grammar.identifierPart ?? /[A-Za-z0-9_$]/;
+
+  if (!identifierStart.test(line[index])) {
+    return null;
+  }
+
+  let cursor = index + 1;
+  while (cursor < line.length && identifierPart.test(line[cursor])) {
+    cursor++;
+  }
+
+  const value = line.slice(index, cursor);
+  const isKeyword = grammar.keywords.includes(value);
+
+  return {
+    token: { type: isKeyword ? "keyword" : "text", value },
+    nextIndex: cursor,
+  };
+}
+
+function matchPunctuation(line: string, index: number, grammar: LanguageGrammar): TokenMatch | null {
+  if ((grammar.punctuation ?? []).includes(line[index])) {
+    return {
+      token: { type: "punctuation", value: line[index] },
+      nextIndex: index + 1,
+    };
+  }
+
+  return null;
+}
+
+function matchOperator(line: string, index: number, grammar: LanguageGrammar): TokenMatch | null {
+  const operatorChars = grammar.operatorChars ?? /[=+\-*/%!?<>&|^~]/;
+  if (!operatorChars.test(line[index])) {
+    return null;
+  }
+
+  let cursor = index + 1;
+  while (cursor < line.length && operatorChars.test(line[cursor])) {
+    cursor++;
+  }
+
+  return {
+    token: { type: "operator", value: line.slice(index, cursor) },
+    nextIndex: cursor,
+  };
 }
 
 function tokenizeLine(line: string, lang?: string): Token[] {
-  const keywords = keywordsFor(lang);
+  const grammar = getGrammar(lang);
   const tokens: Token[] = [];
-  let i = 0;
+  let index = 0;
 
-  while (i < line.length) {
-    const char = line[i];
-    const next = line[i + 1];
-
-    if (/\s/.test(char)) {
-      let start = i;
-      while (i < line.length && /\s/.test(line[i])) i++;
-      tokens.push({ type: "text", value: line.slice(start, i) });
-      continue;
-    }
-
-    if (char === "/" && next === "/") {
-      tokens.push({ type: "comment", value: line.slice(i) });
-      break;
-    }
-
-    if (char === "#" && (lang === "bash" || lang === "shell" || lang === "yaml")) {
-      tokens.push({ type: "comment", value: line.slice(i) });
-      break;
-    }
-
-    if (char === '"' || char === "'" || char === "`") {
-      const quote = char;
-      let start = i++;
-      while (i < line.length) {
-        if (line[i] === "\\") {
-          i += 2;
-          continue;
-        }
-        if (line[i] === quote) {
-          i++;
-          break;
-        }
-        i++;
+  while (index < line.length) {
+    if (/\s/.test(line[index])) {
+      const start = index;
+      while (index < line.length && /\s/.test(line[index])) {
+        index++;
       }
-      tokens.push({ type: "string", value: line.slice(start, i) });
+      tokens.push({ type: "text", value: line.slice(start, index) });
       continue;
     }
 
-    if (/[0-9]/.test(char)) {
-      let start = i;
-      while (i < line.length && /[0-9A-Za-z_.xob]/.test(line[i])) i++;
-      tokens.push({ type: "number", value: line.slice(start, i) });
+    const match =
+      matchComment(line, index, grammar) ??
+      matchString(line, index, grammar) ??
+      matchNumber(line, index, grammar) ??
+      matchIdentifier(line, index, grammar) ??
+      matchPunctuation(line, index, grammar) ??
+      matchOperator(line, index, grammar);
+
+    if (match) {
+      tokens.push(match.token);
+      index = match.nextIndex;
       continue;
     }
 
-    if (/[A-Za-z_$]/.test(char)) {
-      let start = i;
-      while (i < line.length && /[A-Za-z0-9_$]/.test(line[i])) i++;
-      const value = line.slice(start, i);
-      tokens.push({ type: keywords.has(value) ? "keyword" : "text", value });
-      continue;
-    }
-
-    if (/[{}()[\],.;:]/.test(char)) {
-      tokens.push({ type: "punctuation", value: char });
-      i++;
-      continue;
-    }
-
-    if (/[=+\-*/%!?<>&|^~]/.test(char)) {
-      let start = i;
-      while (i < line.length && /[=+\-*/%!?<>&|^~]/.test(line[i])) i++;
-      tokens.push({ type: "operator", value: line.slice(start, i) });
-      continue;
-    }
-
-    tokens.push({ type: "text", value: char });
-    i++;
+    tokens.push({ type: "text", value: line[index] });
+    index++;
   }
 
   return tokens;

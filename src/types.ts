@@ -22,6 +22,15 @@ export interface CodeTheme {
   };
 }
 
+export type TokenType =
+  | "keyword"
+  | "string"
+  | "comment"
+  | "number"
+  | "punctuation"
+  | "operator"
+  | "text";
+
 export interface CodeMarkdownProps {
   children: string;
   theme?: CodeTheme;
