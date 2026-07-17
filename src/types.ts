@@ -29,6 +29,11 @@ export type TokenType =
   | "number"
   | "punctuation"
   | "operator"
+  | "identifier"
+  | "function"
+  | "property"
+  | "type"
+  | "parameter"
   | "text";
 
 export interface CodeMarkdownProps {

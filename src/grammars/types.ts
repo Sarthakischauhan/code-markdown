@@ -12,6 +12,8 @@ export interface LanguageGrammar {
   numberLiteral?: RegExp;
   punctuation?: readonly string[];
   operatorChars?: RegExp;
+  declarationKeywords?: readonly string[];
+  typeKeywords?: readonly string[];
 }
 
 export interface TokenMatch {

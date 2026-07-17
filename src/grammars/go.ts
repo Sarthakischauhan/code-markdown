@@ -1,0 +1,43 @@
+import type { LanguageGrammar } from "./types";
+
+const GO_KEYWORDS = [
+  "break",
+  "case",
+  "chan",
+  "const",
+  "continue",
+  "default",
+  "defer",
+  "else",
+  "fallthrough",
+  "for",
+  "func",
+  "go",
+  "goto",
+  "if",
+  "import",
+  "interface",
+  "map",
+  "package",
+  "range",
+  "return",
+  "select",
+  "struct",
+  "switch",
+  "type",
+  "var",
+] as const;
+
+export const goGrammar: LanguageGrammar = {
+  names: ["go", "golang"],
+  keywords: GO_KEYWORDS,
+  commentPrefixes: ["//"],
+  stringDelimiters: ["'", '"', "`"],
+  identifierStart: /[A-Za-z_]/,
+  identifierPart: /[A-Za-z0-9_]/,
+  numberLiteral: /^(?:0[xX][\dA-Fa-f_]+|0[bB][01_]+|0[oO][0-7_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?(?:i)?)$/,
+  punctuation: ["{", "}", "(", ")", "[", "]", ",", ".", ";", ":"],
+  operatorChars: /[=+\-*/%!?<>&|^~]/,
+  declarationKeywords: ["func", "type", "var", "const"],
+  typeKeywords: ["struct", "interface", "type"],
+};
