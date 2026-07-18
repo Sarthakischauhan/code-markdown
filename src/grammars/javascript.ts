@@ -54,4 +54,6 @@ export const javascriptGrammar: LanguageGrammar = {
   numberLiteral: /^(?:0[xX][\dA-Fa-f_]+|0[bB][01_]+|0[oO][0-7_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?)$/,
   punctuation: ["{", "}", "(", ")", "[", "]", ",", ".", ";", ":"],
   operatorChars: /[=+\-*/%!?<>&|^~]/,
+  declarationKeywords: ["function", "const", "let", "var"],
+  typeKeywords: ["class", "extends"],
 };

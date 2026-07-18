@@ -50,4 +50,6 @@ export const pythonGrammar: LanguageGrammar = {
   numberLiteral: /^(?:\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?|0[xX][\dA-Fa-f_]+|0[bB][01_]+|0[oO][0-7_]+)$/,
   punctuation: ["{", "}", "(", ")", "[", "]", ",", ".", ";", ":"],
   operatorChars: /[=+\-*/%!?<>&|^~]/,
+  declarationKeywords: ["def", "class"],
+  typeKeywords: [],
 };

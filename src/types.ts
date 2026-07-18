@@ -22,6 +22,13 @@ export interface CodeTheme {
   };
 }
 
+export type BuiltinThemeName =
+  | "catppuccin-mocha"
+  | "catppuccin-macchiato"
+  | "catppuccin-frappe"
+  | "catppuccin-latte"
+  | "anysphere";
+
 export type TokenType =
   | "keyword"
   | "string"
@@ -29,11 +36,16 @@ export type TokenType =
   | "number"
   | "punctuation"
   | "operator"
+  | "identifier"
+  | "function"
+  | "property"
+  | "type"
+  | "parameter"
   | "text";
 
 export interface CodeMarkdownProps {
   children: string;
-  theme?: CodeTheme;
+  theme?: CodeTheme | BuiltinThemeName;
   font?: string;
   language?: string;
   showLineNumbers?: boolean;

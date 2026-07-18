@@ -1,4 +1,4 @@
-import { getGrammar } from "./grammars";
+import { loadGrammar } from "./grammars";
 import type { LanguageGrammar, TokenMatch } from "./grammars/types";
 import type { CodeTheme, TokenType } from "./types";
 
@@ -10,6 +10,7 @@ type CodeToHtmlOptions = {
   lang?: string;
   theme: CodeTheme;
   highlightLines?: number[];
+  showLineNumbers?: boolean;
   transformers?: HighlightLine[];
 };
 
@@ -19,7 +20,7 @@ type Token = {
 };
 
 type MiniHighlighter = {
-  codeToHtml(code: string, options: CodeToHtmlOptions): string;
+  codeToHtml(code: string, options: CodeToHtmlOptions): Promise<string>;
 };
 
 function escapeHtml(value: string) {
@@ -33,6 +34,72 @@ function escapeHtml(value: string) {
 
 function normalizeCode(value: string) {
   return value.replace(/^\n/, "").replace(/\n$/, "");
+}
+
+function isToken(token: Token | undefined, value: string) {
+  return token?.value === value;
+}
+
+function previousNonText(tokens: Token[], index: number) {
+  for (let cursor = index - 1; cursor >= 0; cursor--) {
+    if (tokens[cursor].type !== "text") {
+      return tokens[cursor];
+    }
+  }
+
+  return undefined;
+}
+
+function nextNonText(tokens: Token[], index: number) {
+  for (let cursor = index + 1; cursor < tokens.length; cursor++) {
+    if (tokens[cursor].type !== "text") {
+      return tokens[cursor];
+    }
+  }
+
+  return undefined;
+}
+
+function refineTokens(tokens: Token[], grammar: LanguageGrammar): Token[] {
+  const declarationKeywords = new Set(grammar.declarationKeywords ?? []);
+  const typeKeywords = new Set(grammar.typeKeywords ?? []);
+
+  return tokens.map((token, index) => {
+    if (token.type !== "identifier") {
+      return token;
+    }
+
+    const previous = previousNonText(tokens, index);
+    const next = nextNonText(tokens, index);
+
+    if (previous?.type === "keyword" && declarationKeywords.has(previous.value)) {
+      return { ...token, type: "function" };
+    }
+
+    if (previous?.type === "keyword" && typeKeywords.has(previous.value)) {
+      return { ...token, type: "type" };
+    }
+
+    if (isToken(next, "(")) {
+      return { ...token, type: "function" };
+    }
+
+    if (isToken(next, ":")) {
+      return { ...token, type: "property" };
+    }
+
+    if (isToken(previous, ":")) {
+      return { ...token, type: "type" };
+    }
+
+    if (previous?.value === "(" || previous?.value === ",") {
+      if (isToken(next, ":") || isToken(next, ",") || isToken(next, ")")) {
+        return { ...token, type: "parameter" };
+      }
+    }
+
+    return token;
+  });
 }
 
 function matchComment(line: string, index: number, grammar: LanguageGrammar): TokenMatch | null {
@@ -113,7 +180,7 @@ function matchIdentifier(line: string, index: number, grammar: LanguageGrammar):
   const isKeyword = grammar.keywords.includes(value);
 
   return {
-    token: { type: isKeyword ? "keyword" : "text", value },
+    token: { type: isKeyword ? "keyword" : "identifier", value },
     nextIndex: cursor,
   };
 }
@@ -146,8 +213,7 @@ function matchOperator(line: string, index: number, grammar: LanguageGrammar): T
   };
 }
 
-function tokenizeLine(line: string, lang?: string): Token[] {
-  const grammar = getGrammar(lang);
+function tokenizeLine(line: string, grammar: LanguageGrammar): Token[] {
   const tokens: Token[] = [];
   let index = 0;
 
@@ -179,7 +245,7 @@ function tokenizeLine(line: string, lang?: string): Token[] {
     index++;
   }
 
-  return tokens;
+  return refineTokens(tokens, grammar);
 }
 
 function tokenColor(type: Token["type"], theme: CodeTheme) {
@@ -196,6 +262,16 @@ function tokenColor(type: Token["type"], theme: CodeTheme) {
       return theme.colors.punctuation;
     case "operator":
       return theme.colors.operator;
+    case "function":
+      return theme.colors.function;
+    case "property":
+      return theme.colors.attribute;
+    case "type":
+      return theme.colors.type;
+    case "parameter":
+      return theme.colors.variable;
+    case "identifier":
+      return theme.colors.foreground;
     default:
       return theme.colors.foreground;
   }
@@ -206,12 +282,20 @@ function renderToken(token: Token, theme: CodeTheme) {
   return `<span class="cm-token cm-${token.type}" style="color:${color}">${escapeHtml(token.value)}</span>`;
 }
 
-function renderLine(line: string, lineNumber: number, lang: string | undefined, theme: CodeTheme, highlightLines: number[]) {
-  const tokens = tokenizeLine(line, lang);
+function renderLine(
+  line: string,
+  lineNumber: number,
+  grammar: LanguageGrammar,
+  theme: CodeTheme,
+  highlightLines: number[],
+  showLineNumbers: boolean
+) {
+  const tokens = tokenizeLine(line, grammar);
   const highlighted = highlightLines.includes(lineNumber) ? " highlighted" : "";
-  return `<span data-line="${lineNumber}" class="cm-line${highlighted}">${tokens
-    .map((token) => renderToken(token, theme))
-    .join("")}</span>`;
+  const lineContent = tokens.map((token) => renderToken(token, theme)).join("") || "&nbsp;";
+  const lineNumberAttr = showLineNumbers ? ` data-line-number="${lineNumber}"` : "";
+
+  return `<span data-line="${lineNumber}"${lineNumberAttr} class="cm-line${highlighted}"><span class="cm-line-content">${lineContent}</span></span>`;
 }
 
 let sharedHighlighter: MiniHighlighter | null = null;
@@ -222,13 +306,24 @@ export async function getCodeHighlighter() {
   if (highlighterPromise) return highlighterPromise;
 
   highlighterPromise = Promise.resolve({
-    codeToHtml(code: string, options: CodeToHtmlOptions) {
+    async codeToHtml(code: string, options: CodeToHtmlOptions) {
       const normalized = normalizeCode(code);
       const lines = normalized.split(/\r?\n/);
       const highlightLines = options.highlightLines ?? [];
+      const showLineNumbers = options.showLineNumbers ?? false;
+      const grammar = await loadGrammar(options.lang);
       const html = lines
-        .map((line, index) => renderLine(line, index + 1, options.lang, options.theme, highlightLines))
-        .join("\n");
+        .map((line, index) =>
+          renderLine(
+            line,
+            index + 1,
+            grammar,
+            options.theme,
+            highlightLines,
+            showLineNumbers
+          )
+        )
+        .join("");
 
       return `<pre><code>${html}</code></pre>`;
     },
