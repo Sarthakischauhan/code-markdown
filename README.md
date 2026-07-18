@@ -1,6 +1,6 @@
 # code-markdown
 
-A React component for rendering beautiful, themeable code blocks with syntax highlighting, optional line numbers, line highlighting, and copy-to-clipboard.
+A React component for rendering themeable code blocks with syntax highlighting, optional line numbers, line highlighting, and copy-to-clipboard.
 
 ## Features
 
@@ -10,6 +10,7 @@ A React component for rendering beautiful, themeable code blocks with syntax hig
 - Line highlighting
 - Copy button
 - Custom font and styles
+- Grammar-driven tokenizer registry for custom language support
 
 ## Installation
 
@@ -22,13 +23,13 @@ bun add code-markdown
 ## Usage
 
 ```tsx
-import { CodeMarkdown, catppuccinMocha } from "code-markdown";
+import { CodeMarkdown } from "code-markdown";
 import "code-markdown/styles.css";
 
 export function App() {
   return (
     <CodeMarkdown
-      theme={catppuccinMocha}
+      theme="catppuccin-mocha"
       language="tsx"
       showLineNumbers
       highlightLines={[2, 3]}
@@ -39,12 +40,25 @@ export function App() {
 }
 ```
 
+## Grammars
+
+Language definitions live under `src/grammars`. The tokenizer stays unified in `src/highlighter.ts`, and each grammar file only declares language rules:
+
+- aliases / language names
+- keywords
+- comment prefixes
+- string delimiters
+- identifier and number patterns
+- punctuation and operator rules
+
+Add a new grammar file and register it in `src/grammars/index.ts`.
+
 ## Props
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `children` | `string` | required | Code to render |
-| `theme` | `CodeTheme` | `catppuccinMocha` | Theme object |
+| `theme` | `CodeTheme \| BuiltinThemeName` | `"catppuccin-mocha"` | Theme object or built-in theme name |
 | `font` | `string` | `"JetBrains Mono", "Fira Code", monospace` | Font family |
 | `language` | `string` | `typescript` | Language name |
 | `showLineNumbers` | `boolean` | `false` | Show line numbers |
@@ -57,7 +71,15 @@ export function App() {
 
 ## Themes
 
-Built-in themes are exported from the package:
+Built-in theme names are lazy-loaded by the component:
+
+- `"catppuccin-mocha"`
+- `"catppuccin-macchiato"`
+- `"catppuccin-frappe"`
+- `"catppuccin-latte"`
+- `"anysphere"`
+
+Theme objects are still exported from the package if you want to import them directly:
 
 - `catppuccinMocha`
 - `catppuccinMacchiato`

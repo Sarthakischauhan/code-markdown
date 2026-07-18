@@ -1,6 +1,6 @@
 export { CodeMarkdown } from "./CodeMarkdown";
 export { getCodeHighlighter, normalizeCode } from "./highlighter";
-export type { CodeTheme, CodeMarkdownProps } from "./types";
+export type { BuiltinThemeName, CodeTheme, CodeMarkdownProps } from "./types";
 export {
   catppuccinMocha,
   catppuccinMacchiato,
@@ -9,3 +9,4 @@ export {
   catppuccinThemes,
 } from "./themes/catppuccin";
 export { anysphereTheme, anysphereTheme as anySphereTheme } from "./themes/anysphere";
+export { isBuiltinTheme, loadTheme } from "./themes";

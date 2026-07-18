@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { CodeTheme, CodeMarkdownProps } from "./types";
-import { catppuccinMocha } from "./themes/catppuccin";
+import { isBuiltinTheme, loadTheme } from "./themes";
 import { CodeHeader } from "./components/CodeHeader";
 import { CodeBody } from "./components/CodeBody";
 import { CodeLoading } from "./components/CodeLoading";
@@ -8,7 +8,7 @@ import { getCodeHighlighter, normalizeCode } from "./highlighter";
 
 export function CodeMarkdown({
   children,
-  theme = catppuccinMocha,
+  theme = "catppuccin-mocha",
   font = '"JetBrains Mono", "Fira Code", monospace',
   language = "typescript",
   showLineNumbers,
@@ -22,18 +22,22 @@ export function CodeMarkdown({
   const [html, setHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [resolvedTheme, setResolvedTheme] = useState<CodeTheme | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const code = normalizeCode(children);
   const shouldShowLineNumbers = showLineNumbers ?? lineNumbers ?? false;
 
   const loadHighlighter = useCallback(async () => {
+    setIsLoading(true);
     try {
+      const resolvedTheme: CodeTheme = isBuiltinTheme(theme) ? await loadTheme(theme) : theme;
+      setResolvedTheme(resolvedTheme);
       const highlighter = await getCodeHighlighter();
 
-      const output = highlighter.codeToHtml(code, {
+      const output = await highlighter.codeToHtml(code, {
         lang: language,
-        theme,
+        theme: resolvedTheme,
         highlightLines,
         showLineNumbers: shouldShowLineNumbers,
       });
@@ -41,6 +45,7 @@ export function CodeMarkdown({
       setHtml(output);
     } catch (err) {
       console.error("Failed to highlight code:", err);
+      setResolvedTheme(null);
       setHtml(
         `<pre><code>${code
           .replace(/&/g, "&amp;")
@@ -82,13 +87,13 @@ export function CodeMarkdown({
   }, []);
 
   const containerStyle: React.CSSProperties = {
-    "--code-bg": theme.colors.background,
-    "--code-fg": theme.colors.foreground,
+    "--code-bg": resolvedTheme?.colors.background,
+    "--code-fg": resolvedTheme?.colors.foreground,
     "--code-font": font,
-    "--code-surface": theme.colors.surface,
-    "--code-overlay": theme.colors.overlay,
-    "--code-subtext": theme.colors.subtext,
-    "--code-comment": theme.colors.comment,
+    "--code-surface": resolvedTheme?.colors.surface,
+    "--code-overlay": resolvedTheme?.colors.overlay,
+    "--code-subtext": resolvedTheme?.colors.subtext,
+    "--code-comment": resolvedTheme?.colors.comment,
     position: "relative",
     borderRadius: "5px",
     overflow: "hidden",

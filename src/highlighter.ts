@@ -1,4 +1,4 @@
-import { getGrammar } from "./grammars";
+import { loadGrammar } from "./grammars";
 import type { LanguageGrammar, TokenMatch } from "./grammars/types";
 import type { CodeTheme, TokenType } from "./types";
 
@@ -20,7 +20,7 @@ type Token = {
 };
 
 type MiniHighlighter = {
-  codeToHtml(code: string, options: CodeToHtmlOptions): string;
+  codeToHtml(code: string, options: CodeToHtmlOptions): Promise<string>;
 };
 
 function escapeHtml(value: string) {
@@ -213,8 +213,7 @@ function matchOperator(line: string, index: number, grammar: LanguageGrammar): T
   };
 }
 
-function tokenizeLine(line: string, lang?: string): Token[] {
-  const grammar = getGrammar(lang);
+function tokenizeLine(line: string, grammar: LanguageGrammar): Token[] {
   const tokens: Token[] = [];
   let index = 0;
 
@@ -286,12 +285,12 @@ function renderToken(token: Token, theme: CodeTheme) {
 function renderLine(
   line: string,
   lineNumber: number,
-  lang: string | undefined,
+  grammar: LanguageGrammar,
   theme: CodeTheme,
   highlightLines: number[],
   showLineNumbers: boolean
 ) {
-  const tokens = tokenizeLine(line, lang);
+  const tokens = tokenizeLine(line, grammar);
   const highlighted = highlightLines.includes(lineNumber) ? " highlighted" : "";
   const lineContent = tokens.map((token) => renderToken(token, theme)).join("") || "&nbsp;";
   const lineNumberAttr = showLineNumbers ? ` data-line-number="${lineNumber}"` : "";
@@ -307,17 +306,18 @@ export async function getCodeHighlighter() {
   if (highlighterPromise) return highlighterPromise;
 
   highlighterPromise = Promise.resolve({
-    codeToHtml(code: string, options: CodeToHtmlOptions) {
+    async codeToHtml(code: string, options: CodeToHtmlOptions) {
       const normalized = normalizeCode(code);
       const lines = normalized.split(/\r?\n/);
       const highlightLines = options.highlightLines ?? [];
       const showLineNumbers = options.showLineNumbers ?? false;
+      const grammar = await loadGrammar(options.lang);
       const html = lines
         .map((line, index) =>
           renderLine(
             line,
             index + 1,
-            options.lang,
+            grammar,
             options.theme,
             highlightLines,
             showLineNumbers

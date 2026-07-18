@@ -22,6 +22,13 @@ export interface CodeTheme {
   };
 }
 
+export type BuiltinThemeName =
+  | "catppuccin-mocha"
+  | "catppuccin-macchiato"
+  | "catppuccin-frappe"
+  | "catppuccin-latte"
+  | "anysphere";
+
 export type TokenType =
   | "keyword"
   | "string"
@@ -38,7 +45,7 @@ export type TokenType =
 
 export interface CodeMarkdownProps {
   children: string;
-  theme?: CodeTheme;
+  theme?: CodeTheme | BuiltinThemeName;
   font?: string;
   language?: string;
   showLineNumbers?: boolean;
