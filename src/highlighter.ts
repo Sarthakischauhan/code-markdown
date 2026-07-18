@@ -10,6 +10,7 @@ type CodeToHtmlOptions = {
   lang?: string;
   theme: CodeTheme;
   highlightLines?: number[];
+  showLineNumbers?: boolean;
   transformers?: HighlightLine[];
 };
 
@@ -282,12 +283,20 @@ function renderToken(token: Token, theme: CodeTheme) {
   return `<span class="cm-token cm-${token.type}" style="color:${color}">${escapeHtml(token.value)}</span>`;
 }
 
-function renderLine(line: string, lineNumber: number, lang: string | undefined, theme: CodeTheme, highlightLines: number[]) {
+function renderLine(
+  line: string,
+  lineNumber: number,
+  lang: string | undefined,
+  theme: CodeTheme,
+  highlightLines: number[],
+  showLineNumbers: boolean
+) {
   const tokens = tokenizeLine(line, lang);
   const highlighted = highlightLines.includes(lineNumber) ? " highlighted" : "";
-  return `<span data-line="${lineNumber}" class="cm-line${highlighted}">${tokens
-    .map((token) => renderToken(token, theme))
-    .join("")}</span>`;
+  const lineContent = tokens.map((token) => renderToken(token, theme)).join("") || "&nbsp;";
+  const lineNumberAttr = showLineNumbers ? ` data-line-number="${lineNumber}"` : "";
+
+  return `<span data-line="${lineNumber}"${lineNumberAttr} class="cm-line${highlighted}"><span class="cm-line-content">${lineContent}</span></span>`;
 }
 
 let sharedHighlighter: MiniHighlighter | null = null;
@@ -302,9 +311,19 @@ export async function getCodeHighlighter() {
       const normalized = normalizeCode(code);
       const lines = normalized.split(/\r?\n/);
       const highlightLines = options.highlightLines ?? [];
+      const showLineNumbers = options.showLineNumbers ?? false;
       const html = lines
-        .map((line, index) => renderLine(line, index + 1, options.lang, options.theme, highlightLines))
-        .join("\n");
+        .map((line, index) =>
+          renderLine(
+            line,
+            index + 1,
+            options.lang,
+            options.theme,
+            highlightLines,
+            showLineNumbers
+          )
+        )
+        .join("");
 
       return `<pre><code>${html}</code></pre>`;
     },

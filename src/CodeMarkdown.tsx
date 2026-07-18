@@ -25,7 +25,6 @@ export function CodeMarkdown({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const code = normalizeCode(children);
-  const lines = code.split(/\r?\n/);
   const shouldShowLineNumbers = showLineNumbers ?? lineNumbers ?? false;
 
   const loadHighlighter = useCallback(async () => {
@@ -36,6 +35,7 @@ export function CodeMarkdown({
         lang: language,
         theme,
         highlightLines,
+        showLineNumbers: shouldShowLineNumbers,
       });
 
       setHtml(output);
@@ -50,7 +50,7 @@ export function CodeMarkdown({
     } finally {
       setIsLoading(false);
     }
-  }, [code, language, theme, highlightLines]);
+  }, [code, language, theme, highlightLines, shouldShowLineNumbers]);
 
   useEffect(() => {
     loadHighlighter();
@@ -118,9 +118,7 @@ export function CodeMarkdown({
 
       <CodeBody
         html={html}
-        lines={lines}
         showLineNumbers={shouldShowLineNumbers}
-        highlightLines={highlightLines}
       />
     </div>
   );
