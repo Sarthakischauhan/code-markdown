@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { CodeTheme, CodeMarkdownProps } from "./types";
 import { isBuiltinTheme, loadTheme } from "./themes";
 import { CodeHeader } from "./components/CodeHeader";
@@ -27,39 +27,53 @@ export function CodeMarkdown({
 
   const code = normalizeCode(children);
   const shouldShowLineNumbers = showLineNumbers ?? lineNumbers ?? false;
-
-  const loadHighlighter = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const resolvedTheme: CodeTheme = isBuiltinTheme(theme) ? await loadTheme(theme) : theme;
-      setResolvedTheme(resolvedTheme);
-      const highlighter = await getCodeHighlighter();
-
-      const output = await highlighter.codeToHtml(code, {
-        lang: language,
-        theme: resolvedTheme,
-        highlightLines,
-        showLineNumbers: shouldShowLineNumbers,
-      });
-
-      setHtml(output);
-    } catch (err) {
-      console.error("Failed to highlight code:", err);
-      setResolvedTheme(null);
-      setHtml(
-        `<pre><code>${code
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")}</code></pre>`
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [code, language, theme, highlightLines, shouldShowLineNumbers]);
+  // Consumers commonly pass an inline array. Use its contents as the dependency
+  // so that an equivalent array does not trigger another async highlight run.
+  const highlightLinesKey = highlightLines.join(",");
+  const stableHighlightLines = useMemo(
+    () => [...highlightLines],
+    [highlightLinesKey]
+  );
 
   useEffect(() => {
-    loadHighlighter();
-  }, [loadHighlighter]);
+    let cancelled = false;
+
+    setIsLoading(true);
+
+    (async () => {
+      try {
+        const resolvedTheme: CodeTheme = isBuiltinTheme(theme) ? await loadTheme(theme) : theme;
+        const highlighter = await getCodeHighlighter();
+
+        const output = await highlighter.codeToHtml(code, {
+          lang: language,
+          theme: resolvedTheme,
+          highlightLines: stableHighlightLines,
+          showLineNumbers: shouldShowLineNumbers,
+        });
+
+        if (cancelled) return;
+        setResolvedTheme(resolvedTheme);
+        setHtml(output);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Failed to highlight code:", err);
+        setResolvedTheme(null);
+        setHtml(
+          `<pre><code>${code
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")}</code></pre>`
+        );
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [code, language, theme, highlightLinesKey, shouldShowLineNumbers, stableHighlightLines]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -100,7 +114,7 @@ export function CodeMarkdown({
     ...style,
   } as React.CSSProperties;
 
-  if (isLoading) {
+  if (isLoading && !html) {
     return (
       <div
         className={`code-markdown code-markdown--loading ${className || ""}`}
@@ -111,8 +125,17 @@ export function CodeMarkdown({
     );
   }
 
+  const hasHeaderControls = showLanguage || showCopyButton;
+  const rootClassName = [
+    "code-markdown",
+    hasHeaderControls ? "code-markdown--with-controls" : "",
+    className || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={`code-markdown ${className || ""}`} style={containerStyle}>
+    <div className={rootClassName} style={containerStyle}>
       <CodeHeader
         language={language}
         copied={copied}

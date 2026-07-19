@@ -60,7 +60,7 @@ Add a new grammar file and register it in `src/grammars/index.ts`.
 | `children` | `string` | required | Code to render |
 | `theme` | `CodeTheme \| BuiltinThemeName` | `"catppuccin-mocha"` | Theme object or built-in theme name |
 | `font` | `string` | `"JetBrains Mono", "Fira Code", monospace` | Font family |
-| `language` | `string` | `typescript` | Language name |
+| `language` | `SupportedLanguage` | `typescript` | Language name or alias |
 | `showLineNumbers` | `boolean` | `false` | Show line numbers |
 | `lineNumbers` | `boolean` | `false` | Alias for `showLineNumbers` |
 | `showCopyButton` | `boolean` | `true` | Show copy button |
@@ -68,6 +68,18 @@ Add a new grammar file and register it in `src/grammars/index.ts`.
 | `highlightLines` | `number[]` | `[]` | Highlight specific lines |
 | `className` | `string` | - | Extra class name |
 | `style` | `React.CSSProperties` | - | Inline styles |
+
+## Supported languages
+
+The built-in grammars support these language names and aliases:
+
+- C: `c`, `h`
+- C++: `cpp`, `cxx`, `cc`, `hpp`, `hxx`
+- Go: `go`
+- JavaScript: `javascript`, `js`, `jsx`, `mjs`
+- Python: `python`, `py`
+- Rust: `rust`, `rs`
+- TypeScript: `typescript`, `ts`, `tsx`
 
 ## Themes
 

@@ -1,6 +1,6 @@
 {
-  "name": "code-markdown",
-  "version": "0.1.0",
+  "name": "@sarchauhan/code-markdown",
+  "version": "0.0.1",
   "description": "A React component for beautiful code snippets with syntax highlighting and theming",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -25,10 +25,11 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "demo:dev": "cd demo && bun dev",
-    "demo:build": "cd demo && bun run build",
+    "example:dev": "cd examples && bun dev",
+    "example:build": "cd examples && bun run build",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublish": "npm run typecheck && npm run build"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

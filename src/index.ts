@@ -1,6 +1,11 @@
 export { CodeMarkdown } from "./CodeMarkdown";
 export { getCodeHighlighter, normalizeCode } from "./highlighter";
-export type { BuiltinThemeName, CodeTheme, CodeMarkdownProps } from "./types";
+export type {
+  BuiltinThemeName,
+  CodeTheme,
+  CodeMarkdownProps,
+  SupportedLanguage,
+} from "./types";
 export {
   catppuccinMocha,
   catppuccinMacchiato,

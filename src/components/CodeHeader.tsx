@@ -15,6 +15,10 @@ export function CodeHeader({
   showCopyButton,
   onCopy,
 }: CodeHeaderProps) {
+  if (!showLanguage && !showCopyButton) {
+    return null;
+  }
+
   return (
     <div className="code-markdown__header">
       {showLanguage && (
@@ -22,12 +26,13 @@ export function CodeHeader({
       )}
       {showCopyButton && (
         <button
+          type="button"
           className="code-markdown__copy"
           onClick={onCopy}
           aria-label={copied ? "Copied!" : "Copy code"}
+          title={copied ? "Copied!" : "Copy code"}
         >
           {copied ? <CheckIcon /> : <CopyIcon />}
-          <span>{copied ? "Copied!" : "Copy"}</span>
         </button>
       )}
     </div>
