@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install package dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck package
+        run: bun run typecheck
+
+      - name: Build package
+        run: bun run build
+
+      - name: Verify npm package contents
+        run: npm pack --dry-run
+
+      - name: Install example dependencies
+        working-directory: examples
+        run: bun install --frozen-lockfile
+
+      - name: Build example app
+        run: bun run example:build
