@@ -22,12 +22,13 @@ export function CodeHeader({
       )}
       {showCopyButton && (
         <button
+          type="button"
           className="code-markdown__copy"
           onClick={onCopy}
           aria-label={copied ? "Copied!" : "Copy code"}
+          title={copied ? "Copied!" : "Copy code"}
         >
           {copied ? <CheckIcon /> : <CopyIcon />}
-          <span>{copied ? "Copied!" : "Copy"}</span>
         </button>
       )}
     </div>

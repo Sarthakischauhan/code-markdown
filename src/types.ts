@@ -29,6 +29,28 @@ export type BuiltinThemeName =
   | "catppuccin-latte"
   | "anysphere";
 
+/** Languages and aliases supported by the built-in grammars. */
+export type SupportedLanguage =
+  | "c"
+  | "h"
+  | "cpp"
+  | "cxx"
+  | "cc"
+  | "hpp"
+  | "hxx"
+  | "go"
+  | "javascript"
+  | "js"
+  | "jsx"
+  | "mjs"
+  | "python"
+  | "py"
+  | "rust"
+  | "rs"
+  | "typescript"
+  | "ts"
+  | "tsx";
+
 export type TokenType =
   | "keyword"
   | "string"
@@ -47,7 +69,7 @@ export interface CodeMarkdownProps {
   children: string;
   theme?: CodeTheme | BuiltinThemeName;
   font?: string;
-  language?: string;
+  language?: SupportedLanguage;
   showLineNumbers?: boolean;
   lineNumbers?: boolean;
   showCopyButton?: boolean;
