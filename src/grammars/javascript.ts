@@ -42,6 +42,7 @@ const JAVASCRIPT_KEYWORDS = [
   "while",
   "with",
   "yield",
+  "type"
 ] as const;
 
 export const javascriptGrammar: LanguageGrammar = {

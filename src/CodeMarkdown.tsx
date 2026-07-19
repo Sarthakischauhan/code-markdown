@@ -125,8 +125,17 @@ export function CodeMarkdown({
     );
   }
 
+  const hasHeaderControls = showLanguage || showCopyButton;
+  const rootClassName = [
+    "code-markdown",
+    hasHeaderControls ? "code-markdown--with-controls" : "",
+    className || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={`code-markdown ${className || ""}`} style={containerStyle}>
+    <div className={rootClassName} style={containerStyle}>
       <CodeHeader
         language={language}
         copied={copied}

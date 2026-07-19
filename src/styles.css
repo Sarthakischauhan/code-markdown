@@ -11,20 +11,29 @@
 }
 
 .code-markdown__header {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 32px;
-  padding: 5px 10px;
-  background: color-mix(in srgb, var(--code-surface, #313244) 55%, transparent);
+  pointer-events: none;
 }
 
 .code-markdown__language {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--code-surface, #313244) 82%, transparent);
   font-size: 11px;
   font-weight: 500;
   color: var(--code-subtext, #a6adc8);
-  text-transform: uppercase;
   letter-spacing: 0.08em;
+  pointer-events: auto;
 }
 
 .code-markdown__copy {
@@ -34,8 +43,8 @@
   height: 28px;
   justify-content: center;
   padding: 5px;
-  background: transparent;
-  border: 0;
+  background: color-mix(in srgb, var(--code-surface, #313244) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--code-overlay, #45475a) 55%, transparent);
   border-radius: 999px;
   color: var(--code-subtext, #a6adc8);
   font-family: inherit;
@@ -43,6 +52,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   opacity: 0.85;
+  pointer-events: auto;
 }
 
 .code-markdown__copy:hover {
@@ -84,10 +94,15 @@
   overflow-wrap: anywhere;
 }
 
+.code-markdown--with-controls .code-markdown__code pre {
+  padding-top: clamp(48px, 6vw, 56px);
+}
+
 @media (max-width: 480px) {
   .code-markdown__header {
-    min-height: 28px;
-    padding: 4px 8px;
+    top: 8px;
+    left: 8px;
+    right: 8px;
   }
 
   .code-markdown__copy {

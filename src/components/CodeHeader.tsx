@@ -15,6 +15,10 @@ export function CodeHeader({
   showCopyButton,
   onCopy,
 }: CodeHeaderProps) {
+  if (!showLanguage && !showCopyButton) {
+    return null;
+  }
+
   return (
     <div className="code-markdown__header">
       {showLanguage && (
