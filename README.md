@@ -14,17 +14,32 @@ A React component for rendering themeable code blocks with syntax highlighting, 
 
 ## Installation
 
+Install the package with your package manager:
+
 ```bash
-bun add code-markdown
-# or npm i code-markdown
-# or pnpm add code-markdown
+bun add @sarchauhan/code-markdown
+```
+
+```bash
+npm install @sarchauhan/code-markdown
+```
+
+```bash
+pnpm add @sarchauhan/code-markdown
+```
+
+Import the component and stylesheet once in your app:
+
+```tsx
+import { CodeMarkdown } from "@sarchauhan/code-markdown";
+import "@sarchauhan/code-markdown/styles.css";
 ```
 
 ## Usage
 
 ```tsx
-import { CodeMarkdown } from "code-markdown";
-import "code-markdown/styles.css";
+import { CodeMarkdown } from "@sarchauhan/code-markdown";
+import "@sarchauhan/code-markdown/styles.css";
 
 export function App() {
   return (
@@ -38,6 +53,57 @@ export function App() {
     </CodeMarkdown>
   );
 }
+```
+
+## Examples
+
+### Python
+
+```tsx
+<CodeMarkdown language="python">
+  {`def greet(name):
+    return f"hello, {name}"
+
+print(greet("Ada"))`}
+</CodeMarkdown>
+```
+
+### Go
+
+```tsx
+<CodeMarkdown language="go">
+  {`package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("hello, go")
+}`}
+</CodeMarkdown>
+```
+
+### Rust
+
+```tsx
+<CodeMarkdown language="rust">
+  {`fn main() {
+    let name = "Ferris";
+    println!("hello, {name}");
+}`}
+</CodeMarkdown>
+```
+
+### C++
+
+```tsx
+<CodeMarkdown language="cpp">
+  {`#include <iostream>
+
+int main() {
+    std::cout << "hello, c++\\n";
+    return 0;
+}`}
+</CodeMarkdown>
 ```
 
 ## Grammars
