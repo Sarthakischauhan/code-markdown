@@ -241,6 +241,7 @@ export default function App() {
           font={selectedFont.value}
           language={selectedExample.language}
           showLineNumbers={showLineNumbers}
+          showExportButtons
           highlightLines={highlightLines}
         >
           {selectedExample.code}
@@ -269,6 +270,7 @@ function App() {
       font='"Poppins", sans-serif'
       language="tsx"
       showLineNumbers
+      showExportButtons
       highlightLines={[2, 3]}
     >
       {codeString}

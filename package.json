@@ -45,7 +45,9 @@
     "typescript": "^5.8.3",
     "vite": "^8.1.4"
   },
-  "dependencies": {},
+  "dependencies": {
+    "html-to-image": "^1.11.13"
+  },
   "keywords": [
     "react",
     "code",

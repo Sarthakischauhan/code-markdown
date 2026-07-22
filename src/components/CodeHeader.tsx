@@ -5,7 +5,10 @@ interface CodeHeaderProps {
   copied: boolean;
   showLanguage: boolean;
   showCopyButton: boolean;
+  showExportButtons: boolean;
+  isExporting: boolean;
   onCopy: () => void;
+  onExport: (format: "png" | "jpg") => void;
 }
 
 export function CodeHeader({
@@ -13,9 +16,12 @@ export function CodeHeader({
   copied,
   showLanguage,
   showCopyButton,
+  showExportButtons,
+  isExporting,
   onCopy,
+  onExport,
 }: CodeHeaderProps) {
-  if (!showLanguage && !showCopyButton) {
+  if (!showLanguage && !showCopyButton && !showExportButtons) {
     return null;
   }
 
@@ -24,17 +30,43 @@ export function CodeHeader({
       {showLanguage && (
         <span className="code-markdown__language">{language}</span>
       )}
-      {showCopyButton && (
-        <button
-          type="button"
-          className="code-markdown__copy"
-          onClick={onCopy}
-          aria-label={copied ? "Copied!" : "Copy code"}
-          title={copied ? "Copied!" : "Copy code"}
-        >
-          {copied ? <CheckIcon /> : <CopyIcon />}
-        </button>
-      )}
+      <div className="code-markdown__actions" data-export-ignore="true">
+        {showExportButtons && (
+          <>
+            <button
+              type="button"
+              className="code-markdown__export"
+              onClick={() => onExport("png")}
+              aria-label="Export PNG"
+              title="Export PNG"
+              disabled={isExporting}
+            >
+              PNG
+            </button>
+            <button
+              type="button"
+              className="code-markdown__export"
+              onClick={() => onExport("jpg")}
+              aria-label="Export JPG"
+              title="Export JPG"
+              disabled={isExporting}
+            >
+              JPG
+            </button>
+          </>
+        )}
+        {showCopyButton && (
+          <button
+            type="button"
+            className="code-markdown__copy"
+            onClick={onCopy}
+            aria-label={copied ? "Copied!" : "Copy code"}
+            title={copied ? "Copied!" : "Copy code"}
+          >
+            {copied ? <CheckIcon /> : <CopyIcon />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { toCanvas } from "html-to-image";
 import type { CodeTheme, CodeMarkdownProps } from "./types";
 import { isBuiltinTheme, loadTheme } from "./themes";
 import { CodeHeader } from "./components/CodeHeader";
 import { CodeBody } from "./components/CodeBody";
 import { CodeLoading } from "./components/CodeLoading";
 import { getCodeHighlighter, normalizeCode } from "./highlighter";
+import { buildExportCanvas, invertHex } from "./lib/exportImage";
 
 export function CodeMarkdown({
   children,
@@ -14,7 +16,9 @@ export function CodeMarkdown({
   showLineNumbers,
   lineNumbers,
   showCopyButton = true,
+  showExportButtons = false,
   showLanguage = true,
+  exportFileName = "code-snippet",
   className,
   style,
   highlightLines = [],
@@ -22,8 +26,10 @@ export function CodeMarkdown({
   const [html, setHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [resolvedTheme, setResolvedTheme] = useState<CodeTheme | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const code = normalizeCode(children);
   const shouldShowLineNumbers = showLineNumbers ?? lineNumbers ?? false;
@@ -94,14 +100,58 @@ export function CodeMarkdown({
     }
   }, [code]);
 
+  const handleExport = useCallback(
+    async (format: "png" | "jpg") => {
+      const node = containerRef.current;
+      if (!node || isExporting) return;
+
+      setIsExporting(true);
+
+      try {
+        const backgroundColor = resolvedTheme?.colors.background ?? "#1e1e2e";
+        const invertedBackground = invertHex(backgroundColor);
+        const pixelRatio = 2;
+
+        const snippetCanvas = await toCanvas(node, {
+          cacheBust: true,
+          pixelRatio,
+          skipFonts: true,
+          filter: (domNode: HTMLElement) =>
+            !("getAttribute" in domNode) || domNode.getAttribute("data-export-ignore") !== "true",
+        });
+        const exportCanvas = buildExportCanvas(
+          snippetCanvas,
+          invertedBackground,
+          pixelRatio
+        );
+        const link = document.createElement("a");
+        const dataUrl =
+          format === "png"
+            ? exportCanvas.toDataURL("image/png")
+            : exportCanvas.toDataURL("image/jpeg", 0.95);
+
+        link.download = `${exportFileName}.${format}`;
+        link.href = dataUrl;
+        link.click();
+      } catch (err) {
+        console.error(`Failed to export ${format.toUpperCase()}:`, err);
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    [exportFileName, isExporting, resolvedTheme]
+  );
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
+  const backgroundColor = resolvedTheme?.colors.background ?? "#1e1e2e";
+
   const containerStyle: React.CSSProperties = {
-    "--code-bg": resolvedTheme?.colors.background,
+    "--code-bg": backgroundColor,
     "--code-fg": resolvedTheme?.colors.foreground,
     "--code-font": font,
     "--code-surface": resolvedTheme?.colors.surface,
@@ -125,7 +175,7 @@ export function CodeMarkdown({
     );
   }
 
-  const hasHeaderControls = showLanguage || showCopyButton;
+  const hasHeaderControls = showLanguage || showCopyButton || showExportButtons;
   const rootClassName = [
     "code-markdown",
     hasHeaderControls ? "code-markdown--with-controls" : "",
@@ -135,13 +185,16 @@ export function CodeMarkdown({
     .join(" ");
 
   return (
-    <div className={rootClassName} style={containerStyle}>
+    <div ref={containerRef} className={rootClassName} style={containerStyle}>
       <CodeHeader
         language={language}
         copied={copied}
         showLanguage={showLanguage}
         showCopyButton={showCopyButton}
+        showExportButtons={showExportButtons}
+        isExporting={isExporting}
         onCopy={handleCopy}
+        onExport={handleExport}
       />
 
       <CodeBody

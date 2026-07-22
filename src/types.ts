@@ -73,7 +73,9 @@ export interface CodeMarkdownProps {
   showLineNumbers?: boolean;
   lineNumbers?: boolean;
   showCopyButton?: boolean;
+  showExportButtons?: boolean;
   showLanguage?: boolean;
+  exportFileName?: string;
   className?: string;
   style?: React.CSSProperties;
   highlightLines?: number[];
