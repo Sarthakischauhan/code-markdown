@@ -9,6 +9,7 @@ A React component for rendering themeable code blocks with syntax highlighting, 
 - Optional line numbers (`showLineNumbers` or `lineNumbers`)
 - Line highlighting
 - Copy button
+- Optional PNG/JPG export
 - Custom font and styles
 - Grammar-driven tokenizer registry for custom language support
 
@@ -47,6 +48,7 @@ export function App() {
       theme="catppuccin-mocha"
       language="tsx"
       showLineNumbers
+      showExportButtons
       highlightLines={[2, 3]}
     >
       {`const hello = "world";`}
@@ -130,7 +132,9 @@ Add a new grammar file and register it in `src/grammars/index.ts`.
 | `showLineNumbers` | `boolean` | `false` | Show line numbers |
 | `lineNumbers` | `boolean` | `false` | Alias for `showLineNumbers` |
 | `showCopyButton` | `boolean` | `true` | Show copy button |
+| `showExportButtons` | `boolean` | `false` | Show PNG/JPG export buttons |
 | `showLanguage` | `boolean` | `true` | Show language label |
+| `exportFileName` | `string` | `"code-snippet"` | Base filename used for image downloads |
 | `highlightLines` | `number[]` | `[]` | Highlight specific lines |
 | `className` | `string` | - | Extra class name |
 | `style` | `React.CSSProperties` | - | Inline styles |

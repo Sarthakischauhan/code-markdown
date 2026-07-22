@@ -1,10 +1,97 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { toCanvas } from "html-to-image";
 import type { CodeTheme, CodeMarkdownProps } from "./types";
 import { isBuiltinTheme, loadTheme } from "./themes";
 import { CodeHeader } from "./components/CodeHeader";
 import { CodeBody } from "./components/CodeBody";
 import { CodeLoading } from "./components/CodeLoading";
 import { getCodeHighlighter, normalizeCode } from "./highlighter";
+
+function invertHex(hex: string) {
+  const cleanHex = hex.replace("#", "");
+
+  if (!/^[0-9a-fA-F]{6}$/.test(cleanHex)) {
+    return "#ffffff";
+  }
+
+  const inverted = (0xffffff ^ parseInt(cleanHex, 16)).toString(16);
+  return `#${inverted.padStart(6, "0").toUpperCase()}`;
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const cleanHex = hex.replace("#", "");
+
+  if (!/^[0-9a-fA-F]{6}$/.test(cleanHex)) {
+    return `rgba(255, 255, 255, ${alpha})`;
+  }
+
+  const value = parseInt(cleanHex, 16);
+  const red = (value >> 16) & 255;
+  const green = (value >> 8) & 255;
+  const blue = value & 255;
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function buildExportCanvas(
+  snippetCanvas: HTMLCanvasElement,
+  backgroundColor: string,
+  invertedBackground: string,
+  pixelRatio: number
+) {
+  const padding = Math.round(32 * pixelRatio);
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = snippetCanvas.width + padding * 2;
+  exportCanvas.height = snippetCanvas.height + padding * 2;
+
+  const context = exportCanvas.getContext("2d");
+  if (!context) {
+    throw new Error("Failed to create export canvas context");
+  }
+
+  context.fillStyle = backgroundColor;
+  context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  const topRightGlow = context.createRadialGradient(
+    exportCanvas.width * 0.82,
+    exportCanvas.height * 0.18,
+    0,
+    exportCanvas.width * 0.82,
+    exportCanvas.height * 0.18,
+    Math.max(exportCanvas.width, exportCanvas.height) * 0.42
+  );
+  topRightGlow.addColorStop(0, hexToRgba(invertedBackground, 0.12));
+  topRightGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  context.fillStyle = topRightGlow;
+  context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  const bottomLeftGlow = context.createRadialGradient(
+    exportCanvas.width * 0.18,
+    exportCanvas.height * 0.82,
+    0,
+    exportCanvas.width * 0.18,
+    exportCanvas.height * 0.82,
+    Math.max(exportCanvas.width, exportCanvas.height) * 0.38
+  );
+  bottomLeftGlow.addColorStop(0, hexToRgba(invertedBackground, 0.08));
+  bottomLeftGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  context.fillStyle = bottomLeftGlow;
+  context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  const diagonalGlow = context.createLinearGradient(
+    0,
+    0,
+    exportCanvas.width,
+    exportCanvas.height
+  );
+  diagonalGlow.addColorStop(0, hexToRgba(invertedBackground, 0.05));
+  diagonalGlow.addColorStop(0.58, "rgba(0, 0, 0, 0)");
+  context.fillStyle = diagonalGlow;
+  context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  context.drawImage(snippetCanvas, padding, padding);
+  return exportCanvas;
+}
 
 export function CodeMarkdown({
   children,
@@ -14,7 +101,9 @@ export function CodeMarkdown({
   showLineNumbers,
   lineNumbers,
   showCopyButton = true,
+  showExportButtons = false,
   showLanguage = true,
+  exportFileName = "code-snippet",
   className,
   style,
   highlightLines = [],
@@ -22,8 +111,10 @@ export function CodeMarkdown({
   const [html, setHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [resolvedTheme, setResolvedTheme] = useState<CodeTheme | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const code = normalizeCode(children);
   const shouldShowLineNumbers = showLineNumbers ?? lineNumbers ?? false;
@@ -94,14 +185,60 @@ export function CodeMarkdown({
     }
   }, [code]);
 
+  const handleExport = useCallback(
+    async (format: "png" | "jpg") => {
+      const node = containerRef.current;
+      if (!node || isExporting) return;
+
+      setIsExporting(true);
+
+      try {
+        const backgroundColor = resolvedTheme?.colors.background ?? "#1e1e2e";
+        const invertedBackground = invertHex(backgroundColor);
+        const pixelRatio = 2;
+
+        const snippetCanvas = await toCanvas(node, {
+          backgroundColor: "rgba(0, 0, 0, 0)",
+          cacheBust: true,
+          pixelRatio,
+          skipFonts: true,
+          filter: (domNode: HTMLElement) =>
+            !("getAttribute" in domNode) || domNode.getAttribute("data-export-ignore") !== "true",
+        });
+        const exportCanvas = buildExportCanvas(
+          snippetCanvas,
+          backgroundColor,
+          invertedBackground,
+          pixelRatio
+        );
+        const link = document.createElement("a");
+        const dataUrl =
+          format === "png"
+            ? exportCanvas.toDataURL("image/png")
+            : exportCanvas.toDataURL("image/jpeg", 0.95);
+
+        link.download = `${exportFileName}.${format}`;
+        link.href = dataUrl;
+        link.click();
+      } catch (err) {
+        console.error(`Failed to export ${format.toUpperCase()}:`, err);
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    [exportFileName, isExporting, resolvedTheme]
+  );
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
+  const backgroundColor = resolvedTheme?.colors.background ?? "#1e1e2e";
+
   const containerStyle: React.CSSProperties = {
-    "--code-bg": resolvedTheme?.colors.background,
+    "--code-bg": backgroundColor,
     "--code-fg": resolvedTheme?.colors.foreground,
     "--code-font": font,
     "--code-surface": resolvedTheme?.colors.surface,
@@ -125,7 +262,7 @@ export function CodeMarkdown({
     );
   }
 
-  const hasHeaderControls = showLanguage || showCopyButton;
+  const hasHeaderControls = showLanguage || showCopyButton || showExportButtons;
   const rootClassName = [
     "code-markdown",
     hasHeaderControls ? "code-markdown--with-controls" : "",
@@ -135,13 +272,16 @@ export function CodeMarkdown({
     .join(" ");
 
   return (
-    <div className={rootClassName} style={containerStyle}>
+    <div ref={containerRef} className={rootClassName} style={containerStyle}>
       <CodeHeader
         language={language}
         copied={copied}
         showLanguage={showLanguage}
         showCopyButton={showCopyButton}
+        showExportButtons={showExportButtons}
+        isExporting={isExporting}
         onCopy={handleCopy}
+        onExport={handleExport}
       />
 
       <CodeBody
