@@ -1,5 +1,10 @@
-# code-markdown
+<div align="center">
 
+<img width="600" alt="code-snippet" src="https://github.com/user-attachments/assets/1cb43d38-7615-47df-8e68-9ec999f70fe5"/>
+
+</div>
+
+# code-markdown
 A React component for rendering themeable code blocks with syntax highlighting, optional line numbers, line highlighting, and copy-to-clipboard.
 
 ## Features
