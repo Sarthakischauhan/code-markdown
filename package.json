@@ -1,6 +1,6 @@
 {
   "name": "@sarchauhan/code-markdown",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A React component for beautiful code snippets with syntax highlighting and theming",
   "type": "module",
   "main": "./dist/index.cjs",
