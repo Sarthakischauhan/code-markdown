@@ -168,7 +168,7 @@ export function CodeMarkdown({
     ...style,
   } as React.CSSProperties;
 
-  if (isLoading && !html) {
+  if (isLoading && !html && !hasDiagram) {
     return (
       <div
         className={`code-markdown code-markdown--loading ${className || ""}`}
