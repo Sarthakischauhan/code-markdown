@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 
-type Shape = "rect" | "round" | "diamond" | "circle";
+type Shape = "rect" | "round" | "diamond";
 type Node = { id: string; label: string; shape: Shape };
 type Edge = { from: string; to: string; label: string; kind: string };
 type Graph = { nodes: Node[]; edges: Edge[]; direction: "TB" | "BT" | "LR" | "RL" };
@@ -56,6 +56,7 @@ type Props = { source: string };
 
 /** Returns null for unsupported syntax so the caller can show the original source. */
 export function MermaidDiagram({ source }: Props) {
+  const markerId = useId().replace(/:/g, "");
   const graph = useMemo(() => parseFlowchart(source), [source]);
   if (!graph) return null;
 
@@ -102,7 +103,7 @@ export function MermaidDiagram({ source }: Props) {
     <div className="code-markdown__diagram" role="img" aria-label={"Flowchart: " + graph.nodes.map((node) => node.label).join(", ")}>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox={"0 0 " + width + " " + height} width={width} height={height}>
         <defs>
-          <marker id="code-markdown-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+          <marker id={markerId} markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
             <path d="M0 0 L8 4 L0 8" fill="none" stroke="currentColor" />
           </marker>
         </defs>
@@ -122,7 +123,7 @@ export function MermaidDiagram({ source }: Props) {
               <path d={"M" + x1 + " " + y1 + " L" + x2 + " " + y2} fill="none" stroke="currentColor"
                 strokeWidth={edge.kind === "==>" ? 2.5 : 1.5}
                 strokeDasharray={edge.kind === "-.->" ? "5 4" : undefined}
-                markerEnd={edge.kind === "---" ? undefined : "url(#code-markdown-arrow)"} />
+                markerEnd={edge.kind === "---" ? undefined : "url(#" + markerId + ")"} />
               {edge.label && <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 7} textAnchor="middle"
                 className="code-markdown__diagram-edge-label">{edge.label}</text>}
             </g>
