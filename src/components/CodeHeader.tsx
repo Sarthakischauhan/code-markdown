@@ -7,6 +7,8 @@ interface CodeHeaderProps {
   showCopyButton: boolean;
   showExportButtons: boolean;
   isExporting: boolean;
+  diagramMode?: "diagram" | "code";
+  onToggleDiagram?: () => void;
   onCopy: () => void;
   onExport: (format: "png" | "jpg") => void;
 }
@@ -18,10 +20,12 @@ export function CodeHeader({
   showCopyButton,
   showExportButtons,
   isExporting,
+  diagramMode,
+  onToggleDiagram,
   onCopy,
   onExport,
 }: CodeHeaderProps) {
-  if (!showLanguage && !showCopyButton && !showExportButtons) {
+  if (!showLanguage && !showCopyButton && !showExportButtons && !diagramMode) {
     return null;
   }
 
@@ -31,6 +35,12 @@ export function CodeHeader({
         <span className="code-markdown__language">{language}</span>
       )}
       <div className="code-markdown__actions" data-export-ignore="true">
+        {diagramMode && (
+          <button type="button" className="code-markdown__export" onClick={onToggleDiagram}
+            aria-label={diagramMode === "diagram" ? "Show Mermaid source" : "Show diagram"}>
+            {diagramMode === "diagram" ? "Code" : "Diagram"}
+          </button>
+        )}
         {showExportButtons && (
           <>
             <button
