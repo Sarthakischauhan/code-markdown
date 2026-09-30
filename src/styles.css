@@ -227,3 +227,38 @@
     transform: scale(1);
   }
 }
+
+
+/* Mermaid flowcharts use only local SVG shapes and theme tokens. */
+.code-markdown__diagram {
+  overflow: auto;
+  padding: 48px 12px 12px;
+  color: var(--code-subtext, #a6adc8);
+}
+
+.code-markdown__diagram svg {
+  display: block;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.code-markdown__diagram-node rect,
+.code-markdown__diagram-node path {
+  fill: var(--code-surface, #313244);
+  stroke: var(--code-overlay, #45475a);
+  stroke-width: 1.5;
+}
+
+.code-markdown__diagram-node text {
+  fill: var(--code-fg, #cdd6f4);
+  font: 13px system-ui, sans-serif;
+}
+
+.code-markdown__diagram-edge-label {
+  fill: var(--code-fg, #cdd6f4);
+  font: 11px system-ui, sans-serif;
+  paint-order: stroke;
+  stroke: var(--code-bg, #1e1e2e);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}

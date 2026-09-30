@@ -31,6 +31,7 @@ export type BuiltinThemeName =
 
 /** Languages and aliases supported by the built-in grammars. */
 export type SupportedLanguage =
+  | "mermaid"
   | "c"
   | "h"
   | "cpp"

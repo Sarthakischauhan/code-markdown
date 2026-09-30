@@ -14,6 +14,7 @@ A React component for rendering themeable code blocks with syntax highlighting, 
 - Optional line numbers (`showLineNumbers` or `lineNumbers`)
 - Line highlighting
 - Copy button
+- Local SVG rendering for Mermaid flowcharts, with a diagram/source switch
 - Optional PNG/JPG export
 - Custom font and styles
 - Grammar-driven tokenizer registry for custom language support
@@ -113,6 +114,21 @@ int main() {
 </CodeMarkdown>
 ```
 
+## Mermaid flowcharts
+
+Set `language="mermaid"` to draw a flowchart directly inside the code block:
+
+```tsx
+<CodeMarkdown language="mermaid">
+  {`flowchart LR
+    A[Write code] --> B{Tests pass?}
+    B -->|yes| C[Ship]
+    B -.->|no| A`}
+</CodeMarkdown>
+```
+
+Rendering uses local React SVG with no Mermaid dependency, CDN, or remote diagram service. Supported syntax: `flowchart` / `graph` with `TB`, `TD`, `BT`, `LR`, or `RL` directions; node labels in `[]`, `()`, and `{}`; and `-->`, `---`, `-.->`, and `==>` links with optional `|label|`. Chained links such as `A --> B --> C`, cycles, and self-loops are supported. Node labels wrap instead of being truncated. Use the Code button to view or copy the source. Unsupported Mermaid syntax is shown as code instead of displaying a misleading diagram.
+
 ## Grammars
 
 Language definitions live under `src/grammars`. The tokenizer stays unified in `src/highlighter.ts`, and each grammar file only declares language rules:
@@ -133,7 +149,7 @@ Add a new grammar file and register it in `src/grammars/index.ts`.
 | `children` | `string` | required | Code to render |
 | `theme` | `CodeTheme \| BuiltinThemeName` | `"catppuccin-mocha"` | Theme object or built-in theme name |
 | `font` | `string` | `"JetBrains Mono", "Fira Code", monospace` | Font family |
-| `language` | `SupportedLanguage` | `typescript` | Language name or alias |
+| `language` | `SupportedLanguage` | `typescript` | Language name or alias, including `mermaid` |
 | `showLineNumbers` | `boolean` | `false` | Show line numbers |
 | `lineNumbers` | `boolean` | `false` | Alias for `showLineNumbers` |
 | `showCopyButton` | `boolean` | `true` | Show copy button |
@@ -155,6 +171,7 @@ The built-in grammars support these language names and aliases:
 - Python: `python`, `py`
 - Rust: `rust`, `rs`
 - TypeScript: `typescript`, `ts`, `tsx`
+- Flowcharts: `mermaid`
 
 ## Themes
 

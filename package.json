@@ -28,6 +28,7 @@
     "example:dev": "cd examples && bun dev",
     "example:build": "cd examples && bun run build",
     "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs",
     "clean": "rm -rf dist",
     "prepublish": "npm run typecheck && npm run build"
   },

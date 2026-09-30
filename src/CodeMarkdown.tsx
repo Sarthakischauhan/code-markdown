@@ -5,6 +5,7 @@ import { isBuiltinTheme, loadTheme } from "./themes";
 import { CodeHeader } from "./components/CodeHeader";
 import { CodeBody } from "./components/CodeBody";
 import { CodeLoading } from "./components/CodeLoading";
+import { MermaidDiagram, parseFlowchart } from "./components/MermaidDiagram";
 import { getCodeHighlighter, normalizeCode } from "./highlighter";
 import { buildExportCanvas, invertHex } from "./lib/exportImage";
 
@@ -26,12 +27,15 @@ export function CodeMarkdown({
   const [html, setHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [showDiagram, setShowDiagram] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [resolvedTheme, setResolvedTheme] = useState<CodeTheme | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const code = normalizeCode(children);
+  const isMermaid = language.toLowerCase() === "mermaid";
+  const hasDiagram = useMemo(() => isMermaid && parseFlowchart(code) !== null, [isMermaid, code]);
   const shouldShowLineNumbers = showLineNumbers ?? lineNumbers ?? false;
   // Consumers commonly pass an inline array. Use its contents as the dependency
   // so that an equivalent array does not trigger another async highlight run.
@@ -164,7 +168,7 @@ export function CodeMarkdown({
     ...style,
   } as React.CSSProperties;
 
-  if (isLoading && !html) {
+  if (isLoading && !html && !hasDiagram) {
     return (
       <div
         className={`code-markdown code-markdown--loading ${className || ""}`}
@@ -175,7 +179,7 @@ export function CodeMarkdown({
     );
   }
 
-  const hasHeaderControls = showLanguage || showCopyButton || showExportButtons;
+  const hasHeaderControls = showLanguage || showCopyButton || showExportButtons || hasDiagram;
   const rootClassName = [
     "code-markdown",
     hasHeaderControls ? "code-markdown--with-controls" : "",
@@ -195,12 +199,13 @@ export function CodeMarkdown({
         isExporting={isExporting}
         onCopy={handleCopy}
         onExport={handleExport}
+        diagramMode={hasDiagram ? (showDiagram ? "diagram" : "code") : undefined}
+        onToggleDiagram={() => setShowDiagram((value) => !value)}
       />
 
-      <CodeBody
-        html={html}
-        showLineNumbers={shouldShowLineNumbers}
-      />
+      {hasDiagram && showDiagram ? <MermaidDiagram source={code} /> : (
+        <CodeBody html={html} showLineNumbers={shouldShowLineNumbers} />
+      )}
     </div>
   );
 }
