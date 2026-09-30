@@ -127,7 +127,7 @@ Set `language="mermaid"` to draw a flowchart directly inside the code block:
 </CodeMarkdown>
 ```
 
-Rendering uses local React SVG with no Mermaid dependency, CDN, or remote diagram service. Supported syntax: `flowchart` / `graph` with `TB`, `TD`, `BT`, `LR`, or `RL` directions; node labels in `[]`, `() `, and `{}`; and `-->`, `---`, `-.->`, and `==>` links with optional `|label|`. Use the Code button to view or copy the source. Unsupported Mermaid syntax is shown as code instead of displaying a misleading diagram.
+Rendering uses local React SVG with no Mermaid dependency, CDN, or remote diagram service. Supported syntax: `flowchart` / `graph` with `TB`, `TD`, `BT`, `LR`, or `RL` directions; node labels in `[]`, `()`, and `{}`; and `-->`, `---`, `-.->`, and `==>` links with optional `|label|`. Chained links such as `A --> B --> C`, cycles, and self-loops are supported. Node labels wrap instead of being truncated. Use the Code button to view or copy the source. Unsupported Mermaid syntax is shown as code instead of displaying a misleading diagram.
 
 ## Grammars
 

@@ -21,6 +21,14 @@ jobs:
       - name: Install package dependencies
         run: bun install --frozen-lockfile
 
+      - name: Set up Node for regression tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Test Mermaid parser and layout
+        run: npm test
+
       - name: Typecheck package
         run: bun run typecheck
 
